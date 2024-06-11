@@ -1,2 +1,1 @@
-# pategan-audit
-Source Code for Benchmarking and Auditing PATE-GAN Implementations
+# The Elusive Pursuit of Replicating PATE-GAN: Benchmarking, Auditing, Debugging
