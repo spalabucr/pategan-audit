@@ -1,0 +1,30 @@
+{
+"data": {"df_name": "cervical_cancer",
+         "df_path": "../data/cervical_cancer/train_cervical_cancer.pkl.gz",
+         "save_eval_bb_path": "../data/results/audit/cervical_cancer_audit_bb.pkl.gz",
+         "save_eval_wb_path": "../data/results/audit/cervical_cancer_audit_wb.pkl.gz"},
+
+"evaluation": {"epsilon": 1,
+               "delta": 1e-5,
+               "teachers_ratio": 125,
+               "vuln_record_id": 397,
+               "n_bins_hist_feat": 5,
+               "n_train": 400,
+               "n_valid": 200,
+               "n_test": 400,
+               "pgs": "all",
+               "pgs_kwargs": {
+                 "PG_ORIGINAL_AUDIT": {"niter": 1000},
+                 "PG_UPDATED_AUDIT": {"max_iter": 1000, "lamda": 0.001},
+                 "PG_SYNTHCITY_AUDIT": {"max_iter": 1000},
+                 "PG_TURING_AUDIT": {"n_iters": 1000},
+                 "PG_BORAI_AUDIT": {"max_iter": 1000},
+                 "PG_SMARTNOISE_AUDIT": {"max_iter": 1000}},
+               "pgs_kwargs_fit": {
+                 "PG_ORIGINAL_AUDIT": {},
+                 "PG_UPDATED_AUDIT": {},
+                 "PG_SYNTHCITY_AUDIT": {},
+                 "PG_TURING_AUDIT": {},
+                 "PG_BORAI_AUDIT": {"lap_scale": 0.001},
+                 "PG_SMARTNOISE_AUDIT": {}}}
+}

@@ -1,0 +1,22 @@
+{
+"data": {"df_name": "isolet",
+         "df_path": "../data/isolet/train_isolet.pkl.gz",
+         "test_df_path": "../data/isolet/test_isolet.pkl.gz",
+         "save_eval_path": "../data/results/utility/isolet_results_10.pkl.gz"},
+
+"generation": {"epsilons": [10],
+               "delta": 1e-5,
+               "teachers_ratio": 1000,
+               "pgs": "all",
+               "pgs_kwargs": {
+                 "PG_ORIGINAL": {},
+                 "PG_UPDATED": {"max_iter": 10000, "lamda": 0.001},
+                 "PG_SYNTHCITY": {"max_iter": 10000},
+                 "PG_TURING": {"n_iters": 10000},
+                 "PG_BORAI": {"max_iter": 10000},
+                 "PG_SMARTNOISE": {"max_iter": 10000}},
+               "n_pgs_per_epsilon": 3,
+               "n_synth_dfs_per_pg": 3},
+
+ "evaluation": {"classifiers": "all"}
+}

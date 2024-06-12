@@ -1,0 +1,16 @@
+{
+"data": {"df_name": "cervical_cancer",
+         "df_path": "../data/cervical_cancer/train_cervical_cancer.pkl.gz",
+         "test_df_path": "../data/cervical_cancer/test_cervical_cancer.pkl.gz",
+         "save_eval_path": "../data/results/utility/cervical_cancer_results_real.pkl.gz"},
+
+"generation": {"epsilons": [],
+               "delta": 1,
+               "teachers_ratio": 1,
+               "pgs": [],
+               "pgs_kwargs": {},
+               "n_pgs_per_epsilon": 1,
+               "n_synth_dfs_per_pg": 1},
+
+ "evaluation": {"classifiers": "all"}
+}

@@ -1,0 +1,13 @@
+{
+"data": {"df_name": "cervical_cancer",
+         "df_path": "../data/cervical_cancer/train_cervical_cancer.pkl.gz",
+         "save_eval_path": "../data/results/audit/cervical_cancer_moments.pickle"},
+
+"generation": {"delta": 1e-5,
+               "teachers_ratio": 125,
+               "pgs": "PG_SMARTNOISE_AUDIT",
+               "pg_kwargs": {"PG_SMARTNOISE_AUDIT": {"record_moments": true,
+                                                     "noise_multiplier": 1,
+                                                     "num_moments": 100,
+                                                     "max_iter": 1000}}}
+}

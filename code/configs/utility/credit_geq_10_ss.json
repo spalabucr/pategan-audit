@@ -1,0 +1,18 @@
+{
+"data": {"df_name": "credit",
+         "df_path": "../data/credit/train_credit.pkl.gz",
+         "test_df_path": "../data/credit/test_credit.pkl.gz",
+         "save_eval_path": "../data/results/utility/credit_results_geq_10_ss.pkl.gz"},
+
+"generation": {"epsilons": [10, 50],
+               "delta": 1e-5,
+               "teachers_ratio": 5000,
+               "pgs": ["PG_SYNTHCITY", "PG_SMARTNOISE"],
+               "pgs_kwargs": {
+                 "PG_SYNTHCITY": {"max_iter": 10000},
+                 "PG_SMARTNOISE": {"max_iter": 10000}},
+               "n_pgs_per_epsilon": 3,
+               "n_synth_dfs_per_pg": 3},
+
+ "evaluation": {"classifiers": "all"}
+}

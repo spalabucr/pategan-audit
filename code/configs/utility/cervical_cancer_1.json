@@ -1,0 +1,22 @@
+{
+"data": {"df_name": "cervical_cancer",
+         "df_path": "../data/cervical_cancer/train_cervical_cancer.pkl.gz",
+         "test_df_path": "../data/cervical_cancer/test_cervical_cancer.pkl.gz",
+         "save_eval_path": "../data/results/utility/cervical_cancer_results_1.pkl.gz"},
+
+"generation": {"epsilons": [1],
+               "delta": 1e-5,
+               "teachers_ratio": 1000,
+               "pgs": "all",
+               "pgs_kwargs": {
+                 "PG_ORIGINAL": {},
+                 "PG_UPDATED": {"max_iter": 10000, "lamda": 0.001},
+                 "PG_SYNTHCITY": {"max_iter": 10000},
+                 "PG_TURING": {"n_iters": 10000},
+                 "PG_BORAI": {"max_iter": 10000},
+                 "PG_SMARTNOISE": {"max_iter": 10000}},
+               "n_pgs_per_epsilon": 5,
+               "n_synth_dfs_per_pg": 5},
+
+ "evaluation": {"classifiers": "all"}
+}

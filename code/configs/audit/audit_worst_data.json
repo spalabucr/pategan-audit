@@ -1,0 +1,12 @@
+{
+"data": {"df_name": "worst_data",
+         "synth_dfs_path": "../data/results/audit/synth_worst_data",
+         "save_eval_path": "../data/results/audit/worst_data_audit.pkl.gz"},
+
+"evaluation": {"epsilon": 1,
+               "delta": 1e-5,
+               "n_train": 400,
+               "n_valid": 200,
+               "n_test": 400,
+               "pgs": "all"}
+}

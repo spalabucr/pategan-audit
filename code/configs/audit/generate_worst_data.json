@@ -1,0 +1,16 @@
+{
+"data": {"df_name": "in_out_data",
+         "save_data_path": "../data/results/audit/synth_worst_data"},
+
+"generation": {"epsilon": 1,
+               "delta": 1e-5,
+               "pgs": "all",
+               "pgs_kwargs": {
+                 "PG_ORIGINAL_AUDIT": {"niter": 100},
+                 "PG_UPDATED_AUDIT": {"max_iter": 100, "lamda": 0.001},
+                 "PG_SYNTHCITY_AUDIT": {"max_iter": 100},
+                 "PG_TURING_AUDIT": {"n_iters": 100},
+                 "PG_BORAI_AUDIT": {"max_iter": 100},
+                 "PG_SMARTNOISE_AUDIT": {"max_iter": 100}},
+               "n_pgs": 1000}
+}

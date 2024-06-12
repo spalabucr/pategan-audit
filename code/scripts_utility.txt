@@ -1,0 +1,25 @@
+# Kaggle Credit
+python eval_utility_cli.py  -C="configs/utility/credit_real.json"
+python eval_utility_cli.py  -C="configs/utility/credit_o.json"
+python eval_utility_cli.py  -C="configs/utility/credit_u.json"
+python eval_utility_cli.py  -C="configs/utility/credit_leq_5_sc.json"
+python eval_utility_cli.py  -C="configs/utility/credit_geq_10_ss.json"
+python eval_utility_cli.py  -C="configs/utility/credit_t.json"
+python eval_utility_cli.py  -C="configs/utility/credit_b.json"
+python eval_utility_cli.py  -C="configs/utility/credit_leq_sn.json"
+
+# Kaggle Cervical Cancer
+python eval_utility_cli.py  -C="configs/utility/cervical_cancer_real.json"
+python eval_utility_cli.py  -C="configs/utility/cervical_cancer_1.json"
+
+# UCI ISOLET
+python eval_utility_cli.py  -C="configs/utility/isolet_real.json"
+python eval_utility_cli.py  -C="configs/utility/isolet_1.json"
+
+# UCI Epileptic Seizure
+python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_real.json"
+python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_l_1.json"
+python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_1.json"
+python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_geq_5_out.json"
+python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_geq_5_ss.json"
+python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_geq_5_b.json"

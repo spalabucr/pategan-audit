@@ -1,0 +1,13 @@
+{
+"data": {"df_name": "cervical_cancer",
+         "df_path": "../data/cervical_cancer/train_cervical_cancer.pkl.gz",
+         "save_eval_path": "../data/results/audit/cervical_cancer_vuln_records.pkl.gz"},
+
+"evaluation": {"n_vuln_records": 64,
+               "n_pgs": 100,
+               "epsilon": 1,
+               "delta": 1e-5,
+               "teachers_ratio": 125,
+               "pg": "PG_ORIGINAL_AUDIT",
+               "pg_kwargs": {"niter": 1000}}
+}

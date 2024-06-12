@@ -1,0 +1,7 @@
+pandas==2.2.1
+scikit-learn==1.4.1
+tqdm==4.66.2
+privacy-estimates==0.1.0
+tensorflow==2.15.0
+synthcity==0.2.10
+smartnoise-synth==1.0.3

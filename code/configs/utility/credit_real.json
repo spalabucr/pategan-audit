@@ -1,0 +1,16 @@
+{
+"data": {"df_name": "credit",
+         "df_path": "../data/credit/train_credit.pkl.gz",
+         "test_df_path": "../data/credit/test_credit.pkl.gz",
+         "save_eval_path": "../data/results/utility/credit_results_real.pkl.gz"},
+
+"generation": {"epsilons": [],
+               "delta": 1,
+               "teachers_ratio": 1,
+               "pgs": [],
+               "pgs_kwargs": {},
+               "n_pgs_per_epsilon": 1,
+               "n_synth_dfs_per_pg": 1},
+
+ "evaluation": {"classifiers": "all"}
+}

@@ -1,0 +1,12 @@
+# Privacy evaluations on Kaggle Cervical Cancer
+python eval_audit_teachers_seen_cli.py  -C="configs/audit/cervical_cancer_teachers_seen.json"
+python eval_audit_teachers_loss_cli.py  -C="configs/audit/cervical_cancer_teachers_loss.json"
+python eval_audit_moments_cli.py  -C="configs/audit/cervical_cancer_moments.json"
+
+# DP auditing on worst-case dataset
+python gen_audit_worst_data_cli.py -C="configs/audit/generate_worst_data.json"
+python eval_audit_worst_attack_cli.py -C="configs/audit/audit_worst_data.json"
+
+# DP auditing on average-case dataset (Kaggle Cervical Cancer)
+python eval_audit_select_vuln_records_cli.py -C="configs/audit/select_vuln_cervical_cancer.json"
+python eval_audit_average_attack_cli.py -C="configs/audit/audit_cervical_cancer.json"

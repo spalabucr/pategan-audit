@@ -1,0 +1,17 @@
+{
+"data": {"df_name": "cervical_cancer",
+         "df_path": "../data/cervical_cancer/train_cervical_cancer.pkl.gz",
+         "save_eval_path": "../data/results/audit/cervical_cancer_teachers_seen.pickle"},
+
+"generation": {"epsilon": 1,
+               "delta": 1e-5,
+               "teachers_ratio": 125,
+               "pgs": "all",
+               "pgs_kwargs": {
+                 "PG_ORIGINAL_AUDIT": {"niter": 1000},
+                 "PG_UPDATED_AUDIT": {"max_iter": 1000, "lamda": 0.001},
+                 "PG_SYNTHCITY_AUDIT": {"max_iter": 1000},
+                 "PG_TURING_AUDIT": {"n_iters": 1000},
+                 "PG_BORAI_AUDIT": {"max_iter": 1000},
+                 "PG_SMARTNOISE_AUDIT": {"max_iter": 1000}}}
+}
