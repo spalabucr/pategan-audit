@@ -49,7 +49,7 @@ class Teachers(Serializable):
     def __init__(
         self,
         num_teachers: int,
-        samples_per_teacher: int,
+        # samples_per_teacher: int,
         batch_size: int,
         lamda: float = 1e-3,  # PATE noise size
         template: str = "xgboost",
@@ -58,7 +58,7 @@ class Teachers(Serializable):
 
         self.num_teachers = num_teachers
         self.teachers_seen_data = defaultdict(set)
-        self.samples_per_teacher = samples_per_teacher
+        # self.samples_per_teacher = samples_per_teacher
         self.batch_size = batch_size
         self.lamda = lamda
         self.model_args: dict = {}
@@ -77,25 +77,22 @@ class Teachers(Serializable):
             }
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def fit(self, X: np.ndarray, generator: Any, add_X_index, return_teachers_loaders=False) -> Any:
+    def fit(self, teachers_Xs: dict, generator: Any, add_X_index, return_teachers_loaders=False) -> Any:
         # 1. train teacher models
         self.teacher_models: list = []
-
-        permutations = np.random.permutation(len(X))
 
         if return_teachers_loaders:
             teachers_loaders = {}
 
         for tidx in range(self.num_teachers):
-            teacher_idx = permutations[int(tidx * self.samples_per_teacher): int((tidx + 1) * self.samples_per_teacher)]
-            teacher_X = X[teacher_idx, :]
+            teacher_X = np.asarray(teachers_Xs[tidx])
 
             # NOTE: reduce size to batch size (to be consistent with PATE-GAN paper, L12, Alg1)
             g_mb = np.asarray(generator(self.batch_size))
 
             # BUG!!!
             idx = np.random.permutation(len(teacher_X[:, 0]))
-            x_mb = teacher_X[idx[: self.samples_per_teacher], :]
+            x_mb = teacher_X[idx, :]
             if return_teachers_loaders:
                 teachers_loaders[tidx] = x_mb
             # NOTE: reduce size to batch size (to be consistent with PATE-GAN paper, L13, Alg1)
@@ -148,7 +145,7 @@ class Teachers(Serializable):
         return n0, n1, out
 
 
-class PG_SYNTHCITY_AUDIT(Serializable):
+class PG_SYNTHCITY_FIX(Serializable):
     """Basic PATE-GAN framework."""
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -159,7 +156,7 @@ class PG_SYNTHCITY_AUDIT(Serializable):
         generator_n_layers_hidden: int = 2,
         generator_n_units_hidden: int = 100,
         generator_nonlin: str = "relu",
-        generator_n_iter: int = 10,
+        generator_n_iter: int = 5,
         generator_dropout: float = 0,
         discriminator_n_layers_hidden: int = 2,
         discriminator_n_units_hidden: int = 100,
@@ -169,7 +166,7 @@ class PG_SYNTHCITY_AUDIT(Serializable):
         lr: float = 1e-4,
         weight_decay: float = 1e-3,
         batch_size: int = 200,
-        random_state: int = 0,
+        random_state=None,
         clipping_value: int = 1,
         encoder_max_clusters: int = 5,
         device: Any = DEVICE,
@@ -217,7 +214,7 @@ class PG_SYNTHCITY_AUDIT(Serializable):
             self.teachers_dict = {i: np.zeros([self.max_iter, self.num_teachers]) for i in range(self.num_teachers)}
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def fit(self, X_train: pd.DataFrame, add_X_index=False) -> Any:
+    def fit(self, X_train: pd.DataFrame, preprocessor_eps=0, add_X_index=False) -> Any:
         self.columns = X_train.columns
 
         if self.delta is None:
@@ -231,6 +228,7 @@ class PG_SYNTHCITY_AUDIT(Serializable):
             X_train,
             n_units_latent=self.generator_n_units_hidden,
             batch_size=self.batch_size,
+            random_state=self.random_state,
             generator_n_layers_hidden=self.generator_n_layers_hidden,
             generator_n_units_hidden=self.generator_n_units_hidden,
             generator_nonlin=self.generator_nonlin,
@@ -253,12 +251,22 @@ class PG_SYNTHCITY_AUDIT(Serializable):
             clipping_value=self.clipping_value,
             encoder_max_clusters=self.encoder_max_clusters,
             encoder=self.encoder,
+            # fixed BUG - process min/max with DP
+            preprocessor_eps=preprocessor_eps,
             n_iter_print=self.generator_n_iter - 1,
             device=self.device,
         )
+
         X_train_enc = self.model.encode(X_train)
         if add_X_index:
             X_train_enc = X_train_enc.reset_index()
+
+        # fixed BUG -fix data data partitioning
+        permutations = np.random.permutation(len(X_train_enc))
+        teachers_Xs = {}
+        for tidx in range(self.num_teachers):
+            teacher_idx = permutations[int(tidx * self.samples_per_teacher): int((tidx + 1) * self.samples_per_teacher)]
+            teachers_Xs[tidx] = X_train_enc.iloc[teacher_idx, :]
 
         # alpha initialize
         self.alpha_dict = np.zeros([self.alpha])
@@ -278,7 +286,7 @@ class PG_SYNTHCITY_AUDIT(Serializable):
             # 1. Train teacher models
             self.teachers = Teachers(
                 num_teachers=self.num_teachers,
-                samples_per_teacher=self.samples_per_teacher,
+                # samples_per_teacher=self.samples_per_teacher,
                 batch_size=self.batch_size,
                 lamda=self.lamda,
                 template=self.teacher_template,
@@ -287,7 +295,7 @@ class PG_SYNTHCITY_AUDIT(Serializable):
                 teachers_loaders = self.teachers.fit(np.asarray(X_train_enc), self.model, add_X_index, return_teachers_loaders=True)
                 teachers_loaders = {i: DataLoader(teacher_data, batch_size=len(teacher_data), shuffle=False) for i, teacher_data in teachers_loaders.items()}
             else:
-                self.teachers.fit(np.asarray(X_train_enc), self.model, add_X_index)
+                self.teachers.fit(teachers_Xs, self.model, add_X_index)
             if add_X_index:
                 for teach_idx, teach_seen_data in self.teachers.teachers_seen_data.items():
                     self.teachers_seen_data[teach_idx].update(teach_seen_data)
@@ -366,9 +374,9 @@ class PG_SYNTHCITY_AUDIT(Serializable):
         # Compute alpha
         for lidx in range(self.alpha):
             upper = 2 * self.lamda**2 * (lidx + 1) * (lidx + 2)
-            t = (1 - q) * np.power((1 - q) / (1 - np.exp(2 * self.lamda) * q), lidx + 1)
-            # BUG!!!
-            t = np.log(t + q * np.exp(2 * self.lamda * lidx + 1))
+            t = (1 - q) * np.power((1 - q) / (1 - np.exp(2 * self.lamda) * q), (lidx + 1))
+            # fixed BUG - fix iteration bracket
+            t = np.log(t + q * np.exp(2 * self.lamda * (lidx + 1)))
             self.alpha_dict[lidx] += np.clip(t, a_min=0, a_max=upper).sum()
         return self.alpha_dict
 

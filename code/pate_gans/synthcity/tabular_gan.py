@@ -1,3 +1,8 @@
+"""
+source: https://github.com/vanderschaarlab/synthcity/blob/main/src/synthcity/plugins/core/models/tabular_gan.py
+"""
+
+
 # stdlib
 from typing import Any, Callable, Optional, Union
 
@@ -20,6 +25,7 @@ from synthcity.plugins.core.models.tabular_encoder import TabularEncoder
 
 
 from pate_gans.synthcity.gan import GAN
+from pate_gans.synthcity.minmax import TableTransformer
 
 
 class TabularGAN(torch.nn.Module):
@@ -152,13 +158,14 @@ class TabularGAN(torch.nn.Module):
         discriminator_weight_decay: float = 1e-3,
         discriminator_opt_betas: tuple = (0.9, 0.999),
         batch_size: int = 64,
-        random_state: int = 0,
+        random_state=None,
         clipping_value: int = 0,
         lambda_gradient_penalty: float = 10,
         lambda_identifiability_penalty: float = 0.1,
         encoder_max_clusters: int = 20,
         encoder: Any = None,
         encoder_whitelist: list = [],
+        preprocessor_eps=0,
         dataloader_sampler: Optional[BaseSampler] = None,
         device: Any = DEVICE,
         patience: int = 10,
@@ -175,6 +182,7 @@ class TabularGAN(torch.nn.Module):
     ) -> None:
         super(TabularGAN, self).__init__()
         self.columns = X.columns
+        self.preprocessor_eps = preprocessor_eps
         self.batch_size = batch_size
         self.sample_prob: Optional[np.ndarray] = None
         self._adjust_inference_sampling = adjust_inference_sampling
@@ -183,6 +191,12 @@ class TabularGAN(torch.nn.Module):
         if encoder is not None:
             self.encoder = encoder
         else:
+            # normalize with DP
+            if self.preprocessor_eps:
+                self.min_max_normalizer = TableTransformer(epsilon=self.preprocessor_eps)
+                self.min_max_normalizer.fit(X)
+                X = pd.DataFrame(self.min_max_normalizer.transform(X))
+
             self.encoder = TabularEncoder(
                 max_clusters=encoder_max_clusters, whitelist=encoder_whitelist
             ).fit(X)
@@ -316,11 +330,16 @@ class TabularGAN(torch.nn.Module):
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def encode(self, X: pd.DataFrame) -> pd.DataFrame:
+        if self.preprocessor_eps:
+            X = pd.DataFrame(self.min_max_normalizer.transform(X))
         return self.encoder.transform(X)
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def decode(self, X: pd.DataFrame) -> pd.DataFrame:
-        return self.encoder.inverse_transform(X)
+        synth_df = self.encoder.inverse_transform(X)
+        if self.preprocessor_eps:
+            synth_df = self.min_max_normalizer.inverse_transform(synth_df)
+        return synth_df
 
     def get_encoder(self) -> TabularEncoder:
         return self.encoder

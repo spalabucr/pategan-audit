@@ -370,8 +370,10 @@ class PG_SMARTNOISE_AUDIT(Synthesizer):
         with torch.no_grad():
             data = np.array(data)
             data = self._transformer.transform(data)
-            s_predict = self.student_disc(torch.tensor(data))
-        return s_predict.detach().numpy()
+            s_predict = self.student_disc(torch.tensor(data)).detach().numpy()
+        if np.isnan(float(s_predict)):
+            s_predict = 0
+        return s_predict
 
     def td_predict(self, data):
         with torch.no_grad():
@@ -379,6 +381,8 @@ class PG_SMARTNOISE_AUDIT(Synthesizer):
             data = self._transformer.transform(data)
             t_predict = np.array([teacher(torch.tensor(data)).detach().numpy()
                                   for teacher in self.teacher_disc]).mean(axis=0)
+        if np.isnan(float(t_predict)):
+            t_predict = 0
         return t_predict
 
     def fit(self, data, *ignore, transformer=None, categorical_columns=[], ordinal_columns=[], continuous_columns=[], preprocessor_eps=0.0, nullable=False, add_X_index=False, skip_processing=False):

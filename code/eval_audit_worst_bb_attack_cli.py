@@ -36,6 +36,7 @@ save_eval_path = config["data"]["save_eval_path"]
 # eval
 epsilon = config["evaluation"]["epsilon"]
 delta = config["evaluation"]["delta"]
+alpha = config["evaluation"]["alpha"]
 n_train = config["evaluation"]["n_train"]
 n_valid = config["evaluation"]["n_valid"]
 n_test = config["evaluation"]["n_test"]
@@ -65,7 +66,7 @@ for pg_name in tqdm(pgs, desc="pg", leave=False):
         _in_df = pd.read_pickle(f"{synth_dfs_path}/{pg_name}/in_{i}.pkl.gz")
         in_data[i] = featurize_df_queries(_in_df, queries)
 
-    auc, emp_eps_approxdp = bb_get_auc_est_eps(out_data, in_data, n_train, n_valid, n_test, delta)
+    auc, emp_eps_approxdp = bb_get_auc_est_eps(out_data, in_data, n_train, n_valid, n_test, delta, alpha)
 
     results = pd.DataFrame([[df_name, pg_name, epsilon, auc, emp_eps_approxdp]], columns=cols)
     results_df = pd.concat([results_df, results], ignore_index=True)

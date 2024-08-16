@@ -95,7 +95,7 @@ class Teachers(Serializable):
 
             x_comb = np.concatenate((x_mb, g_mb), axis=0)
             # NOTE: reduce size to batch size (to be consistent with PATE-GAN paper, L12, Alg1)
-            y_comb = np.concatenate((np.ones([self.batch_size]), np.zeros([self.batch_size])), axis=0)
+            y_comb = np.concatenate((np.ones([len(x_mb)]), np.zeros([len(g_mb)])), axis=0)
             model = self.model_template(**self.model_args)
             model.fit(x_comb, y_comb)
 

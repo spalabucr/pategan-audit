@@ -33,7 +33,7 @@ import torch.utils.data as data_utils
 
 
 class Generator(nn.Module):
-    def __init__(self, latent_size, output_size, conditional=True):
+    def __init__(self, latent_size, output_size, conditional=True, worst_case_audit=False):
         super().__init__()
         z = latent_size
         d = output_size
@@ -41,22 +41,24 @@ class Generator(nn.Module):
             z = z + 1
         else:
             d = d + 1
+        hidden = 2 * latent_size if not worst_case_audit else 2 * latent_size * 10
         self.main = nn.Sequential(
-            nn.Linear(z, 2 * latent_size),
+            nn.Linear(z, hidden),
             nn.ReLU(),
-            nn.Linear(2 * latent_size, d))
+            nn.Linear(hidden, d))
 
     def forward(self, x):
         return self.main(x)
 
 
 class Discriminator(nn.Module):
-    def __init__(self, input_size, wasserstein=False):
+    def __init__(self, input_size, wasserstein=False, worst_case_audit=False):
         super().__init__()
+        hidden = int(input_size / 2) if not worst_case_audit else int(input_size / 2) * 10
         self.main = nn.Sequential(
-            nn.Linear(input_size + 1, int(input_size / 2)),
+            nn.Linear(input_size + 1, hidden),
             nn.ReLU(),
-            nn.Linear(int(input_size / 2), 1))
+            nn.Linear(hidden, 1))
 
         if not wasserstein:
             self.main.add_module(str(3), nn.Sigmoid())
@@ -65,9 +67,12 @@ class Discriminator(nn.Module):
         return self.main(x)
 
 
-def weights_init(m):
+def weights_init(m, worst_case_audit):
     if type(m) == nn.Linear:
-        torch.nn.init.xavier_uniform_(m.weight)
+        if not worst_case_audit:
+            torch.nn.init.xavier_uniform_(m.weight)
+        else:
+            torch.nn.init.constant_(m.weight, 0.01)
         m.bias.data.fill_(0.01)
 
 
@@ -103,23 +108,23 @@ def moments_acc(num_teachers, clean_votes, lap_scale, l_list):
 
 
 class PG_BORAI_AUDIT:
-    def __init__(self, X_shape, z_dim=None, num_teachers=10, epsilon=8, delta=1e-5, max_iter=10000, record_teachers=False, conditional=False):
+    def __init__(self, X_shape, z_dim=None, num_teachers=10, epsilon=8, delta=1e-5, max_iter=10000, record_teachers=False, conditional=False, worst_case_audit=False):
         self.input_dim = X_shape[1] - 1
         if z_dim is None:
             self.z_dim = int(self.input_dim / 4 + 1) if self.input_dim % 4 == 0 else int(self.input_dim / 4)
             self.z_dim = max(self.z_dim, 1)
         else:
             self.z_dim = z_dim
-        self.generator = Generator(self.z_dim, self.input_dim, conditional).double()  # .cuda().double()
-        self.student_disc = Discriminator(self.input_dim, wasserstein=False).double()  # .cuda().double()
-        self.teacher_disc = [Discriminator(self.input_dim, wasserstein=False).double()  # .cuda().double()
+        self.generator = Generator(self.z_dim, self.input_dim, conditional, worst_case_audit=worst_case_audit).double()  # .cuda().double()
+        self.student_disc = Discriminator(self.input_dim, wasserstein=False, worst_case_audit=worst_case_audit).double()  # .cuda().double()
+        self.teacher_disc = [Discriminator(self.input_dim, wasserstein=False, worst_case_audit=worst_case_audit).double()  # .cuda().double()
                              for _ in range(num_teachers)]
-        self.generator.apply(weights_init)
-        self.student_disc.apply(weights_init)
+        self.generator.apply(lambda m: weights_init(m, worst_case_audit))
+        self.student_disc.apply(lambda m: weights_init(m, worst_case_audit))
         self.num_teachers = num_teachers
         self.teachers_seen_data = defaultdict(set)
         for i in range(num_teachers):
-            self.teacher_disc[i].apply(weights_init)
+            self.teacher_disc[i].apply(lambda m: weights_init(m, worst_case_audit))
 
         self.epsilon = epsilon
         self.delta = delta
@@ -130,12 +135,16 @@ class PG_BORAI_AUDIT:
         if self.record_teachers:
             self.teachers_dict = {i: np.zeros([self.max_iter, self.num_teachers]) for i in range(self.num_teachers)}
 
-    def fit(self, x_train, lr=1e-4, batch_size=64, num_teacher_iters=5, num_student_iters=5, num_moments=100, lap_scale=0.0001, class_ratios=None, add_X_index=False):
+    def fit(self, x_train, lr=1e-4, batch_size=64, num_teacher_iters=5, num_student_iters=5, num_moments=100, lap_scale=0.0001, class_ratios=None, add_X_index=False, skip_processing=False):
+        self.skip_processing = skip_processing
         # Prerocess data
         # source: https://github.com/BorealisAI/private-data-generation/blob/737df84e3f1ee521190cc2b62ce408ad708206e6/evaluate.py#L126
         # x_train = expit(x_train) -- this gives lots of NaNs
-        self.processor = MinMaxScaler(clip=True)
-        x_train = self.processor.fit_transform(x_train)
+        if not self.skip_processing:
+            self.processor = MinMaxScaler(clip=True)
+            x_train = self.processor.fit_transform(x_train)
+        else:
+            x_train = np.array(x_train)
 
         x_train, y_train = x_train[:, :-1], x_train[:, -1]
 
@@ -200,8 +209,10 @@ class PG_BORAI_AUDIT:
                     label = label.double()
                     err_d_real = criterion(output, label)
                     err_d_real.backward()
+                    optimizer_td[i].step()
 
                     # train with fake
+                    optimizer_td[i].zero_grad()
                     z = torch.Tensor(batch_size, self.z_dim).uniform_(0, 1)  # .cuda()
                     label.fill_(fake_label)
 
@@ -322,20 +333,23 @@ class PG_BORAI_AUDIT:
         # synthetic_data = logit(synthetic_data) -- this gives lots of NaNs
         # manual fix -- o/w returns NaNs
         synthetic_data = np.clip(synthetic_data, 0, 1)
-        synthetic_data = self.processor.inverse_transform(synthetic_data)
+        if not self.skip_processing:
+            synthetic_data = self.processor.inverse_transform(synthetic_data)
         return synthetic_data
 
     def sd_predict(self, x):
         with torch.no_grad():
             x = np.array(x)
-            x = self.processor.transform(x)
-            s_predict = self.student_disc(torch.tensor(x))
+            if not self.skip_processing:
+                x = self.processor.transform(x)
+            s_predict = self.student_disc(torch.DoubleTensor(x))
         return s_predict.detach().numpy()
 
     def td_predict(self, x):
         with torch.no_grad():
             x = np.array(x)
-            x = self.processor.transform(x)
-            t_predict = np.array([teacher.forward(torch.tensor(x)).detach().numpy()
+            if not self.skip_processing:
+                x = self.processor.transform(x)
+            t_predict = np.array([teacher.forward(torch.DoubleTensor(x)).detach().numpy()
                                   for teacher in self.teacher_disc]).mean(axis=0)
         return t_predict

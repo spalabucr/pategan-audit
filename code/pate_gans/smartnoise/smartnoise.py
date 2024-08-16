@@ -98,7 +98,10 @@ class PG_SMARTNOISE(Synthesizer):
         self,
         epsilon,
         delta=None,
+        lr=1e-4,
         num_teachers=10,
+        lamda=1e-3,
+        alpha=100,
         binary=False,
         latent_dim=64,
         batch_size=64,
@@ -108,7 +111,10 @@ class PG_SMARTNOISE(Synthesizer):
     ):
         self.epsilon = epsilon
         self.delta = delta
+        self.lr = lr
         self.num_teachers = num_teachers
+        self.lamda = lamda
+        self.alpha = alpha
         self.binary = binary
         self.latent_dim = latent_dim
         self.batch_size = batch_size
@@ -191,14 +197,13 @@ class PG_SMARTNOISE(Synthesizer):
         for i in range(self.num_teachers):
             teacher_disc[i].apply(weights_init)
 
-        optimizer_g = optim.Adam(self.generator.parameters(), lr=1e-4)
-        optimizer_s = optim.Adam(student_disc.parameters(), lr=1e-4)
-        optimizer_t = [optim.Adam(teacher_disc[i].parameters(), lr=1e-4) for i in range(self.num_teachers)]
+        optimizer_g = optim.Adam(self.generator.parameters(), lr=self.lr)
+        optimizer_s = optim.Adam(student_disc.parameters(), lr=self.lr)
+        optimizer_t = [optim.Adam(teacher_disc[i].parameters(), lr=self.lr) for i in range(self.num_teachers)]
 
         criterion = nn.BCELoss()
 
-        noise_multiplier = 1e-3
-        alphas = torch.tensor([0.0 for i in range(100)])
+        alphas = torch.tensor([0.0 for i in range(self.alpha)])
         l_list = 1 + torch.tensor(range(100))
         eps = torch.zeros(1)
 
@@ -245,11 +250,11 @@ class PG_SMARTNOISE(Synthesizer):
             for t_3 in range(self.student_iters):
                 noise = torch.rand(self.batch_size, self.latent_dim, device=self.device)
                 fake_data = self.generator(noise.double())
-                predictions, votes = pate(fake_data, teacher_disc, noise_multiplier)
+                predictions, votes = pate(fake_data, teacher_disc, self.lamda)
                 output = student_disc(fake_data.detach())
 
                 # update moments accountant
-                alphas = alphas + moments_acc(self.num_teachers, votes, noise_multiplier, l_list)
+                alphas = alphas + moments_acc(self.num_teachers, votes, self.lamda, l_list)
 
                 loss_s = criterion(output.squeeze(), predictions.to(self.device).squeeze())
                 optimizer_s.zero_grad()

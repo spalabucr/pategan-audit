@@ -1,3 +1,8 @@
+"""
+source: https://github.com/vanderschaarlab/synthcity/blob/main/src/synthcity/plugins/core/models/gan.py
+"""
+
+
 # stdlib
 from typing import Any, Callable, List, Optional, Tuple
 
@@ -15,10 +20,10 @@ from tqdm import tqdm
 import synthcity.logger as log
 from synthcity.metrics.weighted_metrics import WeightedMetrics
 from synthcity.utils.constants import DEVICE
-from synthcity.utils.reproducibility import clear_cache, enable_reproducible_results
+from synthcity.utils.reproducibility import clear_cache
+# from synthcity.utils.reproducibility import enable_reproducible_results
 
-# synthcity relative
-from synthcity.plugins.core.models.mlp import MLP
+from pate_gans.synthcity.mlp import MLP
 
 
 class GAN(nn.Module):
@@ -147,7 +152,7 @@ class GAN(nn.Module):
         discriminator_opt_betas: tuple = (0.9, 0.999),
         # training
         batch_size: int = 64,
-        random_state: int = 0,
+        random_state=None,
         clipping_value: int = 0,
         lambda_gradient_penalty: float = 10,
         lambda_identifiability_penalty: float = 0.1,
@@ -228,7 +233,7 @@ class GAN(nn.Module):
         self.lambda_identifiability_penalty = lambda_identifiability_penalty
 
         self.random_state = random_state
-        enable_reproducible_results(random_state)
+        # enable_reproducible_results(random_state)
 
         def gen_fake_labels(X: torch.Tensor) -> torch.Tensor:
             return torch.zeros((len(X),), device=self.device)

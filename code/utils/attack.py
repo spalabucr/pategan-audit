@@ -1,30 +1,36 @@
+"""
+Inspired by:
+https://github.com/spalabucr/synth-audit/blob/main/utils/audit.py
+and
+https://github.com/microsoft/responsible-ai-toolbox-privacy/tree/main/privacy_estimates
+"""
+
+
 import math
 import numpy as np
 from tqdm import tqdm
 import concurrent.futures
-from scipy.optimize import root_scalar
-from scipy.stats import binomtest, norm
 from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
 
 from privacy_estimates import AttackResults, compute_eps_lo_hi
 
 
-def wb_get_auc_est_eps(out_probs, in_probs, n_valid, n_test, delta):
-    mia_preds = np.concatenate([out_probs, out_probs])
+def wb_get_auc_est_eps(out_probs, in_probs, n_valid, n_test, delta, alpha=0.1):
+    mia_preds = np.concatenate([out_probs, in_probs])
     mia_labels = np.array([0] * (n_valid + n_test) + [1] * (n_valid + n_test))
     auc = roc_auc_score(mia_labels, mia_preds)
 
     scoress = np.concatenate([mia_preds.reshape(-1, 1), mia_labels.reshape(-1, 1)], axis=1)
-    emp_eps = estimate_eps(scoress, n_valid, alpha=0.1, delta=delta, method='cp', n_procs=1)
+    emp_eps = estimate_eps(scoress, n_valid, alpha=alpha, delta=delta, method='cp', n_procs=1)
     scoress_inv_thresh = np.concatenate([1 - mia_preds.reshape(-1, 1), mia_labels.reshape(-1, 1)], axis=1)
-    emp_eps_inv_thresh = estimate_eps(scoress_inv_thresh, n_valid, alpha=0.1, delta=delta, method='cp', n_procs=1)
+    emp_eps_inv_thresh = estimate_eps(scoress_inv_thresh, n_valid, alpha=alpha, delta=delta, method='cp', n_procs=1)
     emp_eps = max(emp_eps, emp_eps_inv_thresh)
 
     return auc, emp_eps
 
 
-def bb_get_auc_est_eps(out_data, in_data, n_train, n_valid, n_test, delta):
+def bb_get_auc_est_eps(out_data, in_data, n_train, n_valid, n_test, delta, alpha=0.1):
     # prepare train data
     train_data = np.concatenate([out_data[: n_train], in_data[: n_train]])
     train_labels = np.array([0] * n_train + [1] * n_train)
@@ -40,9 +46,9 @@ def bb_get_auc_est_eps(out_data, in_data, n_train, n_valid, n_test, delta):
 
     # estimate epsilon
     scoress = np.concatenate([mia_preds.reshape(-1, 1), mia_labels.reshape(-1, 1)], axis=1)
-    emp_eps = estimate_eps(scoress, n_valid, alpha=0.1, delta=delta, method='cp', n_procs=1)
+    emp_eps = estimate_eps(scoress, n_valid, alpha=alpha, delta=delta, method='cp', n_procs=1)
     scoress_inv_thresh = np.concatenate([1 - mia_preds.reshape(-1, 1), mia_labels.reshape(-1, 1)], axis=1)
-    emp_eps_inv_thresh = estimate_eps(scoress_inv_thresh, n_valid, alpha=0.1, delta=delta, method='cp', n_procs=1)
+    emp_eps_inv_thresh = estimate_eps(scoress_inv_thresh, n_valid, alpha=alpha, delta=delta, method='cp', n_procs=1)
     emp_eps = max(emp_eps, emp_eps_inv_thresh)
 
     return auc, emp_eps
@@ -111,8 +117,6 @@ def compute_eps_lower_single(results, alpha, delta, method='all'):
     """
     Given TP, FP, TN, FN, estimate epsilon lower bound using different methods at a given significance level alpha and delta
     """
-    if method == 'GDP':
-        return eps_l_GDP(results, alpha, delta)
 
     eps_lo_jb, eps_lo_b, eps_lo_j = -1, -1, -1
 
@@ -137,29 +141,3 @@ def compute_eps_lower_single(results, alpha, delta, method='all'):
 
     curr_max_eps_lo = max(eps_lo_jb, eps_lo_b, eps_lo_j)
     return curr_max_eps_lo
-
-
-# Privacy accounting using GDP
-def eps_l_GDP(results, alpha, delta):
-    # Step 1: calculate CP upper bound on FPR and FNR at significance level alpha
-    _, fpr_r = binomtest(int(results.FP), int(results.N)).proportion_ci(confidence_level=1 - alpha / 2)
-    _, fnr_r = binomtest(int(results.FN), int(results.P)).proportion_ci(confidence_level=1 - alpha / 2)
-
-    # Step 2: calculate lower bound on mu-GDP
-    mu_l = norm.ppf(1 - fpr_r) - norm.ppf(fnr_r)
-
-    if mu_l < 0:
-        # GDP is not defined for mu < 0
-        return 0
-
-    try:
-        # Step 3: convert mu-GDP to (eps, delta)-DP using Equation (6) from Tight Auditing DPML paper
-        def eq6(epsilon):
-            return norm.cdf(-epsilon / mu_l + mu_l / 2) - np.exp(epsilon) * norm.cdf(-epsilon / mu_l - mu_l / 2) - delta
-
-        sol = root_scalar(eq6, bracket=[0, 50], method='brentq')
-        eps_l = sol.root
-    except Exception:
-        eps_l = 0
-
-    return eps_l
