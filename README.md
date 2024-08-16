@@ -34,7 +34,7 @@ All experiments and tables/plots in the paper can be replicated by running the f
 
 ### 1. Utility Benchmark
 The utility results are presented and discussed in Section 5.
-The utility scripts is:
+The utility script is:
 
 * `code/eval_utility_cli.py`
 
@@ -48,9 +48,10 @@ The privacy evaluation scripts are:
 * `code/eval_audit_teachers_loss_cli.py`
 * `code/eval_audit_moments_cli.py`
 * `code/gen_audit_worst_data_cli.py`
-* `code/eval_audit_worst_attack_cli.py`
+* `code/eval_audit_worst_bb_attack_cli.py`
+* `code/eval_audit_worst_wb_attack_cli.py`
 * `code/eval_audit_select_vuln_records_cli.py`
-* `code/eval_audit_average_attack_cli.py`
+* `code/eval_audit_average_bb_attack_cli.py`
 
 To (re)create the files in `data/results/audit`, one can run the commands in `scripts_audit.txt` from `code`.
 
