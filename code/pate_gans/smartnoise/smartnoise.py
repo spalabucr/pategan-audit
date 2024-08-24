@@ -204,7 +204,7 @@ class PG_SMARTNOISE(Synthesizer):
         criterion = nn.BCELoss()
 
         alphas = torch.tensor([0.0 for i in range(self.alpha)])
-        l_list = 1 + torch.tensor(range(100))
+        l_list = 1 + torch.tensor(range(self.alpha))
         eps = torch.zeros(1)
 
         if self.delta is None:

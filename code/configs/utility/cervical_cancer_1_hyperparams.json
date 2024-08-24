@@ -6,7 +6,7 @@
 
 "generation": {"epsilons": [1],
                "delta": 1e-5,
-               "teachers_ratio": [50, 100, 200],
+               "teachers_ratio": [50, 100, 200, 1000],
                "lamda": [1e-3, 1e-4],
                "alpha": [20, 50, 100],
                "lr": [1e-3, 1e-4, 1e-5],
