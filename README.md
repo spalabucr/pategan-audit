@@ -1,6 +1,6 @@
 # The Elusive Pursuit of Replicating PATE-GAN: Benchmarking, Auditing, Debugging
 
-##  LAST UPDATE: 2024-08-16
+##  LAST UPDATE: 2024-08-24
 
 This repository contains the source code for the paper The Elusive Pursuit of Replicating PATE-GAN: Benchmarking, Auditing, Debugging by G. Ganev, M.S.M.S. Annamalai, E. De Cristofaro
 
