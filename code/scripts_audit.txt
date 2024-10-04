@@ -4,11 +4,8 @@ python eval_audit_teachers_loss_cli.py  -C="configs/audit/cervical_cancer_teache
 python eval_audit_moments_cli.py  -C="configs/audit/cervical_cancer_moments.json"
 
 # DP auditing on worst-case dataset
-python gen_audit_worst_data_cli.py -C="configs/audit/generate_worst_data.json"
 python eval_audit_worst_bb_attack_cli.py -C="configs/audit/audit_worst_data_bb.json"
-python eval_audit_worst_wb_attack_cli.py -C="configs/audit/audit_worst_data_wb.json"
 
 # DP auditing on average-case dataset (Kaggle Cervical Cancer)
 python eval_audit_select_vuln_records_cli.py -C="configs/audit/select_vuln_cervical_cancer.json"
 python eval_audit_average_bb_attack_cli.py -C="configs/audit/audit_cervical_cancer.json"
-python eval_audit_average_bb_attack_cli.py -C="configs/audit/audit_cervical_cancer_fix.json"

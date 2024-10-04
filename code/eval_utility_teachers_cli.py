@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
-from itertools import product
 from argparse import ArgumentParser
 
 import torch
@@ -40,13 +39,6 @@ epsilons = config["generation"]["epsilons"]
 delta = config["generation"]["delta"]
 # hyperparams
 teachers_ratio_list = config["generation"]["teachers_ratio"]
-lamda_list = config["generation"]["lamda"]
-alpha_list = config["generation"]["alpha"]
-lr_list = config["generation"]["lr"]
-batch_size_list = config["generation"]["batch_size"]
-hyperparams_list = [teachers_ratio_list, lamda_list,
-                    alpha_list, lr_list, batch_size_list]
-hyperparams_combinations = list(product(*hyperparams_list))
 
 pgs = config["generation"]["pgs"]
 if pgs == "all":
@@ -68,26 +60,23 @@ dtypes = df.dtypes
 n_records, n_features = df.shape
 
 # initialize df results
-cols = ["df_name", "pg_name", "epsilon", "num_teachers", "lamda", "alpha", "lr",
-        "batch_size", "pg_it", "sd_it"] + [f"{cls}_aucroc" for cls in classifiers]
+cols = ["df_name", "pg_name", "epsilon", "num_teachers", "pg_it", "sd_it"] + [f"{cls}_aucroc" for cls in classifiers]
 results_df = pd.DataFrame(columns=cols)
 
 
 # generate synth df
 for epsilon in tqdm(epsilons, desc="epsilon"):
     for pg_name in tqdm(pgs, desc="pg", leave=False):
-        for hyperparams_combination in tqdm(hyperparams_combinations, desc="hyp it", leave=False):
+        for teachers_ratio in tqdm(teachers_ratio_list, desc="hyp it", leave=False):
             for i_pg in tqdm(range(n_pgs_per_epsilon), desc="pg it", leave=False):
                 # manually update model kwargs
                 pgs_kwargs[pg_name]["epsilon"] = epsilon
                 pgs_kwargs[pg_name]["delta"] = delta
 
-                n_teachers = max(2, n_records // hyperparams_combination[0])
+                n_teachers = max(2, n_records // teachers_ratio)
                 pgs_kwargs[pg_name]["num_teachers"] = n_teachers
-                pgs_kwargs[pg_name]["lamda"] = hyperparams_combination[1]
-                pgs_kwargs[pg_name]["alpha"] = hyperparams_combination[2]
-                pgs_kwargs[pg_name]["lr"] = hyperparams_combination[3]
-                pgs_kwargs[pg_name]["batch_size"] = hyperparams_combination[4]
+                if pg_name in ["PG_ORIGINAL", "PG_UPDATED", "PG_TURING", "PG_BORAI"]:
+                    pgs_kwargs[pg_name]["X_shape"] = (n_records, n_features)
 
                 # initialize and fit pate-gan
                 pg_model = PATE_GANS[pg_name](**pgs_kwargs[pg_name])
@@ -100,10 +89,7 @@ for epsilon in tqdm(epsilons, desc="epsilon"):
                     # run utility evaluation on synth df
                     synth_X, synth_y, test_X, test_y = preprocess_Xy(synth_df, test_df)
                     results = run_classifiers(synth_X, synth_y, test_X, test_y, classifiers)[:, 0]
-
-                    new_results_df = pd.DataFrame([[df_name, pg_name, epsilon, n_teachers] +
-                                                   list(hyperparams_combination[1:]) +
-                                                   [i_pg, i_sd] + list(results)], columns=cols)
+                    new_results_df = pd.DataFrame([[df_name, pg_name, epsilon, n_teachers, i_pg, i_sd] + list(results)], columns=cols)
 
                     results_df = pd.concat([results_df, new_results_df], ignore_index=True)
                     results_df.to_pickle(save_eval_path, compression="gzip")

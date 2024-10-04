@@ -132,6 +132,8 @@ class PG_BORAI:
 
         x_train, y_train = x_train[:, :-1], x_train[:, -1]
 
+        batch_size = min(batch_size, len(x_train) // self.num_teachers)
+
         class_ratios = None
         if self.conditional:
             class_ratios = torch.from_numpy(class_ratios)

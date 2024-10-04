@@ -171,6 +171,7 @@ class PG_SMARTNOISE(Synthesizer):
             raise ValueError("Data must be a numpy array or pandas dataframe")
 
         data_dim = data.shape[1]
+        self.batch_size = min(self.batch_size, len(data) // self.num_teachers)
 
         # self.num_teachers = int(len(data) / 1000)
 

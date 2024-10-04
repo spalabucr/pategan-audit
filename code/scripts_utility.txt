@@ -11,7 +11,6 @@ python eval_utility_cli.py  -C="configs/utility/credit_leq_sn.json"
 # Kaggle Cervical Cancer
 python eval_utility_cli.py  -C="configs/utility/cervical_cancer_real.json"
 python eval_utility_cli.py  -C="configs/utility/cervical_cancer_1.json"
-python eval_utility_hyperparams_cli.py  -C="configs/utility/cervical_cancer_1_hyperparams.json"
 
 # UCI ISOLET
 python eval_utility_cli.py  -C="configs/utility/isolet_real.json"
@@ -24,3 +23,4 @@ python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_1.json"
 python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_geq_5_out.json"
 python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_geq_5_ss.json"
 python eval_utility_cli.py  -C="configs/utility/epileptic_seizure_geq_5_b.json"
+python eval_utility_teachers_cli.py  -C="configs/utility/epileptic_seizure_1_teachers.json"

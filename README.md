@@ -1,7 +1,5 @@
 # The Elusive Pursuit of Replicating PATE-GAN: Benchmarking, Auditing, Debugging
 
-##  LAST UPDATE: 2024-08-24
-
 This repository contains the source code for the paper The Elusive Pursuit of Replicating PATE-GAN: Benchmarking, Auditing, Debugging by G. Ganev, M.S.M.S. Annamalai, E. De Cristofaro
 
 
@@ -34,9 +32,10 @@ All experiments and tables/plots in the paper can be replicated by running the f
 
 ### 1. Utility Benchmark
 The utility results are presented and discussed in Section 5.
-The utility script is:
+The utility scripts are:
 
 * `code/eval_utility_cli.py`
+* `code/eval_utility_teachers_cli.py`
 
 To (re)create the files in `data/results/utility`, one can run the commands in `scripts_utility.txt` from `code`.
 
@@ -47,9 +46,7 @@ The privacy evaluation scripts are:
 * `code/eval_audit_teachers_seen_cli.py`
 * `code/eval_audit_teachers_loss_cli.py`
 * `code/eval_audit_moments_cli.py`
-* `code/gen_audit_worst_data_cli.py`
 * `code/eval_audit_worst_bb_attack_cli.py`
-* `code/eval_audit_worst_wb_attack_cli.py`
 * `code/eval_audit_select_vuln_records_cli.py`
 * `code/eval_audit_average_bb_attack_cli.py`
 

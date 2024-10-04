@@ -11,7 +11,6 @@ import tensorflow as tf
 
 from pate_gans import PATE_GANS_AUDIT, PATE_GANS_FIX
 from utils import fix_dtypes, featurize_df_naive, get_histogram_domain, featurize_df_histogram, featurize_df_corr, bb_get_auc_est_eps
-# from utils import wb_get_auc_est_eps
 
 
 seed = 13
@@ -34,7 +33,6 @@ with open(Path(args.config)) as f:
 df_name = config["data"]["df_name"]
 df_path = config["data"]["df_path"]
 save_eval_bb_path = config["data"]["save_eval_bb_path"]
-# save_eval_wb_path = config["data"]["save_eval_wb_path"]
 # eval
 epsilon = config["evaluation"]["epsilon"]
 delta = config["evaluation"]["delta"]
@@ -72,11 +70,6 @@ bb_cols = ["df_name", "pg_name", "epsilon",
            "corr_auc", "corr_emp_eps_approxdp", "ens_auc", "ens_emp_eps_approxdp"]
 bb_results_df = pd.DataFrame(columns=bb_cols)
 
-# wb_cols = ["df_name", "pg_name", "epsilon",
-#            "out_mean_t", "in_mean_t", "auc_t", "emp_eps_approxdp_t",
-#            "out_mean", "in_mean", "auc", "emp_eps_approxdp"]
-# wb_results_df = pd.DataFrame(columns=wb_cols)
-
 histogram_domain = get_histogram_domain(df, n_bins_hist_feat)
 n_bb_features = {"naive": len(featurize_df_naive(df)),
                  "histogram": len(featurize_df_histogram(df, n_bins_hist_feat, histogram_domain)),
@@ -90,9 +83,6 @@ for pg_name in tqdm(pgs, desc="pg", leave=False):
     pgs_kwargs[pg_name]["epsilon"] = epsilon
     pgs_kwargs[pg_name]["delta"] = delta if pg_name != "PG_ORIGINAL_AUDIT" else int(-np.log10(delta))
     pgs_kwargs[pg_name]["num_teachers"] = n_teachers
-
-    # wb_in_probs, wb_out_probs = np.zeros([n_valid + n_test]), np.zeros([n_valid + n_test])
-    # wb_t_in_probs, wb_t_out_probs = np.zeros([n_valid + n_test]), np.zeros([n_valid + n_test])
 
     bb_na_in_data, bb_na_out_data = np.zeros([n_all, n_bb_features["naive"]]), np.zeros([n_all, n_bb_features["naive"]])
     bb_hi_in_data, bb_hi_out_data = np.zeros([n_all, n_bb_features["histogram"]]), np.zeros([n_all, n_bb_features["histogram"]])
@@ -109,14 +99,6 @@ for pg_name in tqdm(pgs, desc="pg", leave=False):
             pgs_kwargs[pg_name]["X_shape"] = df_in.shape
         pg_model_in = PATE_GANS_AUDIT[pg_name](**pgs_kwargs[pg_name]) if pg_name in PATE_GANS_AUDIT else PATE_GANS_FIX[pg_name](**pgs_kwargs[pg_name])
         pg_model_in.fit(df_in, **pgs_kwargs_fit[pg_name])
-
-        # # white-box access to discriminator
-        # if i in range(n_all - n_train, n_all):
-        #     if pg_name in ["PG_UPDATED_AUDIT", "PG_SYNTHCITY_AUDIT", "PG_BORAI_AUDIT", "PG_SMARTNOISE_AUDIT"]:
-        #         wb_t_out_probs[i - n_train] = float(pg_model_out.td_predict(target))
-        #         wb_t_in_probs[i - n_train] = float(pg_model_in.td_predict(target))
-        #     wb_out_probs[i - n_train] = float(pg_model_out.sd_predict(target))
-        #     wb_in_probs[i - n_train] = float(pg_model_in.sd_predict(target))
 
         # generate data for black box
         synth_df_out = pg_model_out.generate(len(df))
@@ -136,16 +118,6 @@ for pg_name in tqdm(pgs, desc="pg", leave=False):
         # ensemble features
         bb_en_out_data[i] = np.concatenate((bb_na_out_data[i], bb_hi_out_data[i], bb_co_out_data[i]))
         bb_en_in_data[i] = np.concatenate((bb_na_in_data[i], bb_hi_in_data[i], bb_co_in_data[i]))
-
-    # # white-box eps estimation
-    # wb_t_auc, emp_eps_approxdp_t = wb_get_auc_est_eps(wb_t_out_probs, wb_t_in_probs, n_valid, n_test, delta, alpha)
-    # wb_auc, emp_eps_approxdp = wb_get_auc_est_eps(wb_out_probs, wb_in_probs, n_valid, n_test, delta, alpha)
-    #
-    # results = pd.DataFrame([[df_name, pg_name, epsilon,
-    #                          wb_t_out_probs.mean(), wb_t_in_probs.mean(), wb_t_auc, emp_eps_approxdp_t,
-    #                          wb_out_probs.mean(), wb_in_probs.mean(), wb_auc, emp_eps_approxdp]], columns=wb_cols)
-    # wb_results_df = pd.concat([wb_results_df, results], ignore_index=True)
-    # wb_results_df.to_pickle(save_eval_wb_path, compression="gzip")
 
     # black-box eps estimation
     bb_na_auc, emp_eps_approxdp_na = bb_get_auc_est_eps(bb_na_out_data, bb_na_in_data, n_train, n_valid, n_test, delta, alpha)

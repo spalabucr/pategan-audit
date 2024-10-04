@@ -1,11 +1,20 @@
 {
 "data": {"df_name": "worst_data",
-         "synth_dfs_path": "../data/results/audit/synth_worst_data",
          "save_eval_path": "../data/results/audit/worst_data_audit_bb.pkl.gz"},
 
-"evaluation": {"epsilon": 1,
-               "delta": 1e-5,
-               "alpha": 0.1,
+"generation": {"epsilon": 1,
+              "delta": 1e-5,
+              "pgs": "all",
+              "pgs_kwargs": {
+                "PG_ORIGINAL_AUDIT": {"niter": 100},
+                "PG_UPDATED_AUDIT": {"max_iter": 100, "lamda": 0.001},
+                "PG_SYNTHCITY_AUDIT": {"max_iter": 100},
+                "PG_TURING_AUDIT": {"n_iters": 100},
+                "PG_BORAI_AUDIT": {"max_iter": 100},
+                "PG_SMARTNOISE_AUDIT": {"max_iter": 100}},
+              "n_pgs": 1000},
+
+"evaluation": {"alpha": 0.1,
                "n_train": 400,
                "n_valid": 200,
                "n_test": 400,

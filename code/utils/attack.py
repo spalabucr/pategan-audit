@@ -16,20 +16,6 @@ from sklearn.ensemble import RandomForestClassifier
 from privacy_estimates import AttackResults, compute_eps_lo_hi
 
 
-def wb_get_auc_est_eps(out_probs, in_probs, n_valid, n_test, delta, alpha=0.1):
-    mia_preds = np.concatenate([out_probs, in_probs])
-    mia_labels = np.array([0] * (n_valid + n_test) + [1] * (n_valid + n_test))
-    auc = roc_auc_score(mia_labels, mia_preds)
-
-    scoress = np.concatenate([mia_preds.reshape(-1, 1), mia_labels.reshape(-1, 1)], axis=1)
-    emp_eps = estimate_eps(scoress, n_valid, alpha=alpha, delta=delta, method='cp', n_procs=1)
-    scoress_inv_thresh = np.concatenate([1 - mia_preds.reshape(-1, 1), mia_labels.reshape(-1, 1)], axis=1)
-    emp_eps_inv_thresh = estimate_eps(scoress_inv_thresh, n_valid, alpha=alpha, delta=delta, method='cp', n_procs=1)
-    emp_eps = max(emp_eps, emp_eps_inv_thresh)
-
-    return auc, emp_eps
-
-
 def bb_get_auc_est_eps(out_data, in_data, n_train, n_valid, n_test, delta, alpha=0.1):
     # prepare train data
     train_data = np.concatenate([out_data[: n_train], in_data[: n_train]])

@@ -25,7 +25,7 @@ from synthcity.plugins.core.models.tabular_encoder import TabularEncoder
 
 
 from pate_gans.synthcity.gan import GAN
-from pate_gans.synthcity.minmax import TableTransformer
+from pate_gans.synthcity._minmax import TableTransformer
 
 
 class TabularGAN(torch.nn.Module):
